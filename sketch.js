@@ -1,45 +1,37 @@
-// Setup Canvas and Variables
-let rings = [];
-let numRings = 50;
+let airQualityData;
+
+function preload() {
+  // Load the dataset; update with the correct path or URL if needed.
+  airQualityData = loadTable("Beijing_Air_Quality.csv", "csv", "header");
+}
 
 function setup() {
-    createCanvas(windowWidth, windowHeight);
-    // Generate rings with random properties
-    for (let i = 0; i < numRings; i++) {
-        rings.push({
-            x: random(width),
-            y: random(height),
-            size: random(20, 100),
-            growthRate: random(0.2, 1.5),
-            color: color(random(100, 255), random(100, 255), random(50, 200), 150)
-        });
-    }
+  createCanvas(windowWidth, windowHeight);
+  noLoop();
+  background(255);
 }
 
 function draw() {
-    background(20, 30, 50, 50);  // Dark background to reflect Gatsby’s themes
-    
-    // Display rings growing over time
-    for (let ring of rings) {
-        fill(ring.color);
-        noStroke();
-        ellipse(ring.x, ring.y, ring.size);
-        ring.size += ring.growthRate;
+  // Extract data points for visualization
+  let pmValues = airQualityData.getColumn("PM2.5");
+  let tempValues = airQualityData.getColumn("Temperature");
 
-        // Reset ring size when it grows too large
-        if (ring.size > max(width, height) / 2) {
-            ring.size = random(20, 100);
-            ring.x = random(width);
-            ring.y = random(height);
-        }
-    }
+  // Normalize data for scaling
+  let pmMax = max(pmValues);
+  let tempMax = max(tempValues);
 
-    // Interactive Element: Show a “light” moving with mouse
-    fill(255, 223, 0, 150);
+  for (let i = 0; i < pmValues.length; i++) {
+    // Map data values to screen coordinates or other visual properties
+    let pmMapped = map(pmValues[i], 0, pmMax, 0, width);
+    let tempMapped = map(tempValues[i], 0, tempMax, 0, height);
+
+    // Color mapping based on temperature
+    let colorVal = map(tempValues[i], 0, tempMax, 100, 255);
+
+    fill(colorVal, 50, 255 - colorVal, 150);
     noStroke();
-    ellipse(mouseX, mouseY, 50);
-}
 
-function windowResized() {
-    resizeCanvas(windowWidth, windowHeight);
+    // Draw circles to represent PM levels, sized by PM value
+    ellipse(pmMapped, tempMapped, map(pmValues[i], 0, pmMax, 5, 25));
+  }
 }
