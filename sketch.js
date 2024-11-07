@@ -1,42 +1,45 @@
-let data = [];
-
-function preload() {
-  table = loadTable('/Users/nikhilkhandelwal/Downloads/Motor_Vehicle_Collisions.csv', 'csv', 'header');
-}
+// Setup Canvas and Variables
+let rings = [];
+let numRings = 50;
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
-  background(220);
-
-  // Extracting necessary columns from the dataset
-  let boroughs = table.getColumn('BOROUGH');
-  let injuries = table.getColumn('NUMBER OF PERSONS INJURED');
-  
-  // Convert injuries to numbers
-  injuries = injuries.map(x => parseInt(x) || 0);
-
-  // Visualize the data
-  noStroke();
-  let boroughColors = {
-    'MANHATTAN': color(255, 0, 0, 150),
-    'BROOKLYN': color(0, 255, 0, 150),
-    'QUEENS': color(0, 0, 255, 150),
-    'BRONX': color(255, 255, 0, 150),
-    'STATEN ISLAND': color(255, 0, 255, 150),
-    '': color(200, 200, 200, 50)  // Unknown/No data
-  };
-
-  // Display circles based on data
-  for (let i = 0; i < boroughs.length; i++) {
-    let x = random(width);
-    let y = random(height);
-    let size = map(injuries[i], 0, max(injuries), 5, 50);
-
-    fill(boroughColors[boroughs[i]]);
-    ellipse(x, y, size, size);
-  }
+    createCanvas(windowWidth, windowHeight);
+    // Generate rings with random properties
+    for (let i = 0; i < numRings; i++) {
+        rings.push({
+            x: random(width),
+            y: random(height),
+            size: random(20, 100),
+            growthRate: random(0.2, 1.5),
+            color: color(random(100, 255), random(100, 255), random(50, 200), 150)
+        });
+    }
 }
 
 function draw() {
-  // Visualization is static; no need for continuous drawing
+    background(20, 30, 50, 50);  // Dark background to reflect Gatsby’s themes
+    
+    // Display rings growing over time
+    for (let ring of rings) {
+        fill(ring.color);
+        noStroke();
+        ellipse(ring.x, ring.y, ring.size);
+        ring.size += ring.growthRate;
+
+        // Reset ring size when it grows too large
+        if (ring.size > max(width, height) / 2) {
+            ring.size = random(20, 100);
+            ring.x = random(width);
+            ring.y = random(height);
+        }
+    }
+
+    // Interactive Element: Show a “light” moving with mouse
+    fill(255, 223, 0, 150);
+    noStroke();
+    ellipse(mouseX, mouseY, 50);
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
 }

@@ -1,0 +1,118 @@
+import asyncio
+from tkinter import Tk, Button, Frame, font
+from bleak import BleakScanner, BleakClient
+
+characteristic_uuid = "19B10001-E8F2-537E-4F6C-D104768A1214"# Replace with your characteristic UUID
+#characteristic_uuid = "02805CE4-84F8-9037-5CB4-67BD7E47A76B"
+device_address = None
+client = None
+
+async def send_command(command):
+    if client is not None and client.is_connected:
+        try:
+            await client.write_gatt_char(characteristic_uuid, bytearray(command, 'utf-8'))
+        except Exception as e:
+            print(f"Failed to send command: {e}")
+
+def on_fwd_button_press(event=None):
+    asyncio.create_task(send_command('w'))
+
+def on_fwd_button_release(event=None):
+    asyncio.create_task(send_command('x'))
+
+def on_rev_button_press(event=None):
+    asyncio.create_task(send_command('s'))
+
+def on_rev_button_release(event=None):
+    asyncio.create_task(send_command('x'))
+
+def on_stop_button():
+    asyncio.create_task(send_command('x'))
+
+async def send_w_then_s():
+    await send_command('w')
+    await asyncio.sleep(2)
+    await send_command('s')
+    await asyncio.sleep(2)
+    await send_command('x')  # Stop after the sequence
+
+def on_auto_button():
+    asyncio.create_task(send_w_then_s())
+
+async def run(loop):
+    global device_address, client
+    scanner = BleakScanner()
+    print("Scanning for devices...")
+    devices = await scanner.discover()
+
+    for device in devices:
+        print(f"Found device: {device.name} - {device.address}")
+        if device.name == 'Arduino':
+            device_address = device.address
+            break
+
+    if device_address is None:
+        print("No device named 'Servo' found!")
+        return
+
+    client = BleakClient(device_address)
+    try:
+        await client.connect()
+        print(f"Connected to {device_address}")
+    except Exception as e:
+        print(f"Failed to connect: {e}")
+        return
+
+    root = Tk()
+    root.title("Servo Control")
+    root.geometry("300x300")  # Adjusted size to fit additional buttons
+
+    bold_font = font.Font(weight='bold')  # Create a bold font
+
+    frame1 = Frame(root)
+    frame1.pack(fill='both', expand=True, padx=10, pady=10)  # Add some space around the frame
+
+    fwd_button = Button(frame1, text="REV", font=bold_font)
+    fwd_button.bind("<ButtonPress-1>", on_fwd_button_press)
+    fwd_button.bind("<ButtonRelease-1>", on_fwd_button_release)
+    fwd_button.pack(side='left', fill='both', expand=True)
+
+    rev_button = Button(frame1, text="FWD", font=bold_font)
+    rev_button.bind("<ButtonPress-1>", on_rev_button_press)
+    rev_button.bind("<ButtonRelease-1>", on_rev_button_release)
+    rev_button.pack(side='left', fill='both', expand=True)
+
+    frame2 = Frame(root)
+    frame2.pack(fill='both', expand=True, padx=10, pady=10)  # Add some space around the frame
+
+    fwd_cont_button = Button(frame2, text="R.CONT", command=on_fwd_button_press, font=bold_font)
+    fwd_cont_button.pack(side='left', fill='both', expand=True)
+
+    rev_cont_button = Button(frame2, text="F.CONT", command=on_rev_button_press, font=bold_font)
+    rev_cont_button.pack(side='left', fill='both', expand=True)
+
+    frame3 = Frame(root)
+    frame3.pack(fill='both', expand=True, padx=10, pady=10)  # Add some space around the frame
+
+    auto_button = Button(frame3, text="Auto W->S", command=on_auto_button, font=bold_font)
+    auto_button.pack(fill='both', expand=True)
+
+    stop_button = Button(root, text="STOP", command=on_stop_button, fg="white", bg="red", font=bold_font)
+    stop_button.pack(fill='both', expand=True, padx=10, pady=10)  # Add some space around the button
+
+    # Tkinter event loop integrated with asyncio
+    try:
+        while True:
+            root.update_idletasks()
+            root.update()
+            await asyncio.sleep(0.01)
+
+            if not root.winfo_exists():  # Check if the Tkinter window is closed
+                break
+    finally:
+        if client is not None:
+            await client.disconnect()  # Disconnect from the Bluetooth device
+        loop.stop()  # Stop the asyncio event loop
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(run(loop))
