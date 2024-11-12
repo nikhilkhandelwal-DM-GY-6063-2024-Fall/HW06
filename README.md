@@ -16,7 +16,6 @@ The dataset includes over 1000 data points, visualized based on their location a
 
 ## Visualization Description
 This interactive map of NYC displays motor vehicle collisions by borough:
-- **Background Color**: A light blue background for better visibility and aesthetic appeal.
 - **Color Coding**: Each borough is uniquely color-coded, with a legend in the bottom right corner.
 - **Circle Size**: Larger circles represent more severe crashes (in terms of injuries and fatalities).
 - **Hover Feature**: Hovering over a circle shows crash details (`Borough`, `Injuries`, `Fatalities`, and `Severity`). A message in the top left corner reminds users of this feature.
