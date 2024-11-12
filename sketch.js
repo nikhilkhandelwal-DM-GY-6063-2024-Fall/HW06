@@ -1,37 +1,65 @@
-let airQualityData;
+let table;
+let maxSeverity = 0;
+let rotationAngle = -0.2; // Adjust angle for rotation if needed
+let nycMap;
 
 function preload() {
-  // Load the dataset; update with the correct path or URL if needed.
-  airQualityData = loadTable("Beijing_Air_Quality.csv", "csv", "header");
+  // Load the data and the NYC map image
+  table = loadTable('crashes.csv', 'csv', 'header');
+  nycMap = loadImage('nyc_map.png'); // Replace with the actual path to your NYC map image
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  noLoop();
   background(255);
+
+  // Calculate the maximum severity to normalize circle sizes
+  for (let i = 0; i < table.getRowCount(); i++) {
+    let personsInjured = table.getNum(i, 'PERSONS_INJURED');
+    let personsKilled = table.getNum(i, 'PERSONS_KILLED');
+    let severity = personsInjured + personsKilled;
+    if (severity > maxSeverity) {
+      maxSeverity = severity;
+    }
+  }
+
+  noLoop();
 }
 
 function draw() {
-  // Extract data points for visualization
-  let pmValues = airQualityData.getColumn("PM2.5");
-  let tempValues = airQualityData.getColumn("Temperature");
+  background(255);
 
-  // Normalize data for scaling
-  let pmMax = max(pmValues);
-  let tempMax = max(tempValues);
+  // Display the NYC map as the background
+  image(nycMap, 0, 0, width, height);
 
-  for (let i = 0; i < pmValues.length; i++) {
-    // Map data values to screen coordinates or other visual properties
-    let pmMapped = map(pmValues[i], 0, pmMax, 0, width);
-    let tempMapped = map(tempValues[i], 0, tempMax, 0, height);
+  // Translate to the center of the canvas for rotation
+  translate(width / 2, height / 2);
+  rotate(rotationAngle);
 
-    // Color mapping based on temperature
-    let colorVal = map(tempValues[i], 0, tempMax, 100, 255);
+  // Iterate through each row in the table
+  for (let i = 0; i < table.getRowCount(); i++) {
+    let latitude = table.getNum(i, 'LATITUDE');
+    let longitude = table.getNum(i, 'LONGITUDE');
+    let personsInjured = table.getNum(i, 'PERSONS_INJURED');
+    let personsKilled = table.getNum(i, 'PERSONS_KILLED');
 
-    fill(colorVal, 50, 255 - colorVal, 150);
+    // Map latitude and longitude to canvas coordinates based on the map bounds
+    // Adjust these bounds to fit your NYC map
+    let x = map(longitude, -74.1, -73.7, -width / 2, width / 2); // Adjust for NYC longitude range
+    let y = map(latitude, 40.5, 40.9, height / 2, -height / 2);    // Adjust for NYC latitude range
+
+    // Calculate severity and map it to circle size and color intensity
+    let severity = personsInjured + personsKilled;
+    let size = map(severity, 0, maxSeverity, 2, 50); // Adjust max size as needed
+    let col = color(255, 0, 0, map(severity, 0, maxSeverity, 50, 255)); // Adjust transparency
+
+    // Draw the circle at the mapped position
+    fill(col);
     noStroke();
-
-    // Draw circles to represent PM levels, sized by PM value
-    ellipse(pmMapped, tempMapped, map(pmValues[i], 0, pmMax, 5, 25));
+    ellipse(x, y, size, size);
   }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
 }
