@@ -22,10 +22,6 @@ This interactive map of NYC displays motor vehicle collisions by borough:
   
 This visualization aligns with the principles of W. E. B. Du Bois and Edward Tufte, focusing on clarity, minimalism, and interactivity.
 
-## Instructions
-- **GitHub Setup**: Save the code in a GitHub repository called `HW06`. Enable GitHub Pages in the repository settings.
-- **Submission**: Submit the GitHub link to Brightspace.
-
 ## References
 The visualization approach is inspired by Edward Tufte’s and W. E. B. Du Bois’s data storytelling principles, prioritizing clear, impactful, and minimalistic design.
 
